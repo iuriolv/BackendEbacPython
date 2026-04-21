@@ -1,8 +1,15 @@
 from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from typing import Optional
 
 app = FastAPI()
 
 biblioteca = {}
+
+class Livro(BaseModel):
+    nome_livro: str
+    autor: str
+    ano: int
 
 @app.get("/")
 def hello_world():
@@ -15,26 +22,21 @@ def get_livros():
     else:
         return {"livros": biblioteca}
     
-@app.post("/adiciona")
-def post_livros(id_livro: int, nome_livro: str, autor: str, ano: int):
+@app.post("/adicionar")
+def post_livros(id_livro: int, livro: Livro):
     if id_livro in biblioteca:
         raise HTTPException(status_code=400, detail="Esse livro já existe!")
     else:
-        biblioteca[id_livro] = {"nome_livro": nome_livro, "autor": autor, "ano": ano}
+        biblioteca[id_livro] = livro.dict()
         return {"message": "o Livro foi criado com sucesso!"}
     
-@app.put("/atualiza/{id_livro}")
-def put_livros(id_livro: int, nome_livro: str, autor: str, ano: int):
+@app.put("/atualizar/{id_livro}")
+def put_livros(id_livro: int, livro: Livro):
     novo_livro = biblioteca.get(id_livro)
     if not novo_livro:
         raise HTTPException(status_code=404, detail="Este livro não foi encontrado!")
     else:
-        if nome_livro:
-            novo_livro['nome_livro'] = nome_livro
-        if autor:
-            novo_livro['autor'] = autor
-        if ano:
-            novo_livro['ano'] = ano
+        novo_livro[id_livro] = livro.dict()
 
         return {"message": "As infromações foram atualizaas com sucesso!"}
     
