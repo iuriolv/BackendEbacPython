@@ -49,7 +49,7 @@ def get_livros(credentials: HTTPBasicCredentials = Depends(autenticar_usuario)):
     else:
         return {"livros": biblioteca}
     
-@app.post("/adicionar")
+@app.post("/adicionar/{id_livro}")
 def post_livros(id_livro: int, livro: Livro, credentials: HTTPBasicCredentials = Depends(autenticar_usuario)):
     if id_livro in biblioteca:
         raise HTTPException(status_code=400, detail="Esse livro já existe!")
