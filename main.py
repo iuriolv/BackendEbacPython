@@ -43,11 +43,24 @@ def hello_world():
     return {"Hello": "World!"}
 
 @app.get("/livros")
-def get_livros(credentials: HTTPBasicCredentials = Depends(autenticar_usuario)):
+def get_livros(page: int = 1, limit: int = 10, credentials: HTTPBasicCredentials = Depends(autenticar_usuario)):
+    if page < 1 or limit < 1:
+        raise HTTPException(status_code=400, detail="Page ou Limit inválidos!!")    
     if not biblioteca:
         return {"message": "Não existe nenhum livro!"}
-    else:
-        return {"livros": biblioteca}
+    start = (page - 1) * limit
+    end = start + limit
+
+    paginas = [
+        {"id": id_livro, "nome_livro": livro_data["noome_livro"], "autor": livro_data["autor"], "ano": livro_data["ano"]}
+        for id_livro, livro_data in list(biblioteca.items())[start:end]
+    ]
+    return {
+        "Page": page,
+        "Limit": limit,
+        "Total": len(biblioteca),
+        "Livros": paginas
+    }
     
 @app.post("/adicionar/{id_livro}")
 def post_livros(id_livro: int, livro: Livro, credentials: HTTPBasicCredentials = Depends(autenticar_usuario)):
