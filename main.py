@@ -48,12 +48,15 @@ def get_livros(page: int = 1, limit: int = 10, credentials: HTTPBasicCredentials
         raise HTTPException(status_code=400, detail="Page ou Limit inválidos!!")    
     if not biblioteca:
         return {"message": "Não existe nenhum livro!"}
+    
+    ordem = sorted(biblioteca.items(), key=lambda x: x[0])
+
     start = (page - 1) * limit
     end = start + limit
 
     paginas = [
         {"id": id_livro, "nome_livro": livro_data["noome_livro"], "autor": livro_data["autor"], "ano": livro_data["ano"]}
-        for id_livro, livro_data in list(biblioteca.items())[start:end]
+        for id_livro, livro_data in ordem[start:end]
     ]
     return {
         "Page": page,
