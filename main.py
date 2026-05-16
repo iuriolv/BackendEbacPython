@@ -4,6 +4,15 @@ from pydantic import BaseModel
 from typing import Optional
 import secrets
 import os
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+DATABASE_URL = "sqlite:///./biblioteca.db"
+
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
 
 app = FastAPI(
     title="Catálago de Livros",
@@ -22,10 +31,26 @@ security = HTTPBasic()
 
 biblioteca = {}
 
+class LivroBD(Base):
+    __tablename__ = "biblioteca"
+    id = Column(Integer, primary_key=True, index=True)
+    nome_livro = Column(String, index=True)
+    autor = Column(String, index=True)
+    ano = Column(Integer)
+
 class Livro(BaseModel):
     nome_livro: str
     autor: str
     ano: int
+
+Base.metadata.create_all(bind=engine)
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 def autenticar_usuario(credentials: HTTPBasicCredentials = Depends(security)):
     is_username_correct = secrets.compare_digest(credentials.username, MEU_USUARIO)
@@ -55,7 +80,7 @@ def get_livros(page: int = 1, limit: int = 10, credentials: HTTPBasicCredentials
     end = start + limit
 
     paginas = [
-        {"id": id_livro, "nome_livro": livro_data["noome_livro"], "autor": livro_data["autor"], "ano": livro_data["ano"]}
+        {"id": id_livro, "nome_livro": livro_data["nome_livro"], "autor": livro_data["autor"], "ano": livro_data["ano"]}
         for id_livro, livro_data in ordem[start:end]
     ]
     return {
