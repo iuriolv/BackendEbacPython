@@ -84,7 +84,7 @@ def get_livros(page: int = 1, limit: int = 10, db: Session = Depends(get_db), cr
         "Livros": [{'id': livro.id, 'nome_livro': livro.nome_livro, 'autor': livro.autor, 'ano': livro.ano} for livro in livros]
     }
     
-@app.post("/adicionar/{id_livro}")
+@app.post("/adicionar")
 def post_livros(livro: Livro, db: Session = Depends(get_db), credentials: HTTPBasicCredentials = Depends(autenticar_usuario)):
     db_livro = db.query(LivroDB).filter(LivroDB.nome_livro == livro.nome_livro, LivroDB.autor == livro.autor).first()
     if db_livro:
