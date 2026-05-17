@@ -6,7 +6,7 @@ import secrets
 import os
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 
 DATABASE_URL = "sqlite:///./biblioteca.db"
 
@@ -31,7 +31,7 @@ security = HTTPBasic()
 
 biblioteca = {}
 
-class LivroBD(Base):
+class LivroDB(Base):
     __tablename__ = "biblioteca"
     id = Column(Integer, primary_key=True, index=True)
     nome_livro = Column(String, index=True)
@@ -68,51 +68,52 @@ def hello_world():
     return {"Hello": "World!"}
 
 @app.get("/livros")
-def get_livros(page: int = 1, limit: int = 10, credentials: HTTPBasicCredentials = Depends(autenticar_usuario)):
+def get_livros(page: int = 1, limit: int = 10, db: Session = Depends(get_db), credentials: HTTPBasicCredentials = Depends(autenticar_usuario)):
     if page < 1 or limit < 1:
         raise HTTPException(status_code=400, detail="Page ou Limit inválidos!!")    
-    if not biblioteca:
-        return {"message": "Não existe nenhum livro!"}
     
-    ordem = sorted(biblioteca.items(), key=lambda x: x[0])
-
-    start = (page - 1) * limit
-    end = start + limit
-
-    paginas = [
-        {"id": id_livro, "nome_livro": livro_data["nome_livro"], "autor": livro_data["autor"], "ano": livro_data["ano"]}
-        for id_livro, livro_data in ordem[start:end]
-    ]
+    livros = db.query(LivroDB).offset((page - 1) * limit).limit(limit).all()
+    
+    if not livros:
+        return {"message": "Não existe nenhum livro!"}
+    total_livros = db.query(LivroDB).count()
     return {
         "Page": page,
         "Limit": limit,
-        "Total": len(biblioteca),
-        "Livros": paginas
+        "Total": total_livros,
+        "Livros": [{'id': livro.id, 'nome_livro': livro.nome_livro, 'autor': livro.autor, 'ano': livro.ano} for livro in livros]
     }
     
 @app.post("/adicionar/{id_livro}")
-def post_livros(id_livro: int, livro: Livro, credentials: HTTPBasicCredentials = Depends(autenticar_usuario)):
-    if id_livro in biblioteca:
+def post_livros(livro: Livro, db: Session = Depends(get_db), credentials: HTTPBasicCredentials = Depends(autenticar_usuario)):
+    db_livro = db.query(LivroDB).filter(LivroDB.nome_livro == livro.nome_livro, LivroDB.autor == livro.autor).first()
+    if db_livro:
         raise HTTPException(status_code=400, detail="Esse livro já existe!")
-    else:
-        biblioteca[id_livro] = livro.dict()
-        return {"message": "o Livro foi criado com sucesso!"}
+    novo_livro = LivroDB(nome_livro=livro.nome_livro, autor=livro.autor, ano=livro.ano)
+    db.add(novo_livro)
+    db.commit()
+    db.refresh(novo_livro)
+    return {"message": "o Livro foi criado com sucesso!"}
     
 @app.put("/atualizar/{id_livro}")
-def put_livros(id_livro: int, livro: Livro, credentials: HTTPBasicCredentials = Depends(autenticar_usuario)):
-    novo_livro = biblioteca.get(id_livro)
-    if not novo_livro:
+def put_livros(id_livro: int, livro: Livro, db: Session = Depends(get_db), credentials: HTTPBasicCredentials = Depends(autenticar_usuario)):
+    db_livro = db.query(LivroDB).filter(LivroDB.id == id_livro).first()
+    if not db_livro:
         raise HTTPException(status_code=404, detail="Este livro não foi encontrado!")
-    else:
-        biblioteca[id_livro] = livro.dict()
+    db_livro.nome_livro = livro.nome_livro
+    db_livro.autor = livro.autor
+    db_livro.ano = livro.ano
+    db.commit()
+    db.refresh(db_livro)
 
-        return {"message": "As infromações foram atualizaas com sucesso!"}
+    return {"message": "As infromações foram atualizaas com sucesso!"}
     
 @app.delete("/deletar/{id_livro}")
-def delete_livro(id_livro: int, credentials: HTTPBasicCredentials = Depends(autenticar_usuario)):
-    if id_livro not in biblioteca:
+def delete_livro(id_livro: int, db: Session = Depends(get_db), credentials: HTTPBasicCredentials = Depends(autenticar_usuario)):
+    db_livro = db.query(LivroDB).filter(LivroDB.id == id_livro).first()
+    if not db_livro:
         raise HTTPException(status_code=404, detail="Esse livro não existe!")
-    else:
-        del biblioteca[id_livro]
+    db.delete(db_livro)
+    db.commit()
 
-        return {"message": "O livro foi excluido com sucesso!"}
+    return {"message": "O livro foi excluido com sucesso!"}
