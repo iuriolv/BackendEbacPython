@@ -29,8 +29,6 @@ MINHA_SENHA = 'admin'
 
 security = HTTPBasic()
 
-biblioteca = {}
-
 class LivroDB(Base):
     __tablename__ = "biblioteca"
     id = Column(Integer, primary_key=True, index=True)
@@ -60,7 +58,7 @@ def autenticar_usuario(credentials: HTTPBasicCredentials = Depends(security)):
         raise HTTPException(
             status_code=401,
             detail="Usuário ou senha incorretos",
-            headers={"WWW.Authenticate": "Basic"}
+            headers={"WWW-Authenticate": "Basic"}
         )
 
 @app.get("/")
