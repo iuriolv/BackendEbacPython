@@ -61,10 +61,6 @@ def autenticar_usuario(credentials: HTTPBasicCredentials = Depends(security)):
             headers={"WWW-Authenticate": "Basic"}
         )
 
-@app.get("/")
-def hello_world():
-    return {"Hello": "World!"}
-
 @app.get("/livros")
 def get_livros(page: int = 1, limit: int = 10, db: Session = Depends(get_db), credentials: HTTPBasicCredentials = Depends(autenticar_usuario)):
     if page < 1 or limit < 1:
