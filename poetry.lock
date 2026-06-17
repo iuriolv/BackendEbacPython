@@ -54,6 +54,7 @@ files = [
 
 [package.dependencies]
 idna = ">=2.8"
+typing_extensions = {version = ">=4.5", markers = "python_version < \"3.13\""}
 
 [package.extras]
 trio = ["trio (>=0.32.0)"]
@@ -206,7 +207,11 @@ files = [
 [package.dependencies]
 fastar = ">=0.10.0"
 httpx = ">=0.27.0"
-pydantic = {version = ">=2.12.0", extras = ["email"], markers = "python_version >= \"3.14\""}
+pydantic = [
+    {version = ">=2.7.4", extras = ["email"], markers = "python_version < \"3.13\""},
+    {version = ">=2.8.0", extras = ["email"], markers = "python_version == \"3.13\""},
+    {version = ">=2.12.0", extras = ["email"], markers = "python_version >= \"3.14\""},
+]
 rich-toolkit = ">=0.19.7"
 rignore = ">=0.5.1"
 sentry-sdk = ">=2.20.0"
@@ -1442,6 +1447,7 @@ files = [
 
 [package.dependencies]
 anyio = ">=3.6.2,<5"
+typing-extensions = {version = ">=4.10.0", markers = "python_version < \"3.13\""}
 
 [package.extras]
 full = ["httpx (>=0.27.0,<0.29.0)", "itsdangerous", "jinja2", "python-multipart (>=0.0.18)", "pyyaml"]
@@ -1795,5 +1801,5 @@ files = [
 
 [metadata]
 lock-version = "2.1"
-python-versions = ">=3.14"
-content-hash = "9d6007a5bf372df0002e186f71fc5190b85d4fe47be8c740f9e1d9730dc81d32"
+python-versions = ">=3.12"
+content-hash = "f3445906dd6b9bb4afd0df9005809121335e458dac49c54f795ce344a569e5de"
