@@ -78,7 +78,7 @@ cd BackendEbacPython
 Crie um arquivo `.env` na raiz do projeto contendo:
 
 ```env
-DATABASE_URL=sqlite:///./livros.db
+DATABASE_URL=sqlite:///./biblioteca.db
 MEU_USUARIO=admin
 MINHA_SENHA=123456
 ```
