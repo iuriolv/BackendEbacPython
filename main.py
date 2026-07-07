@@ -50,10 +50,10 @@ class Livro(BaseModel):
 
 Base.metadata.create_all(bind=engine)
 
-def salvar_livro_no_cache(livro_id: int, livro: Livro):
+async def salvar_livro_redis(livro_id: int, livro: Livro):
     redis_client.set(f"livro:{livro_id}", json.dumps(livro.dict()))
 
-def deletar_livro_do_cache(livro_id: int):
+async def deletar_livro_redis(livro_id: int):
     redis_client.delete(f"livro:{livro_id}")
 
 def get_db():
@@ -75,7 +75,7 @@ def autenticar_usuario(credentials: HTTPBasicCredentials = Depends(security)):
         )
 
 @app.get("/debug/redis")
-async def ver_livros_cache():
+async def ver_livros_radis():
     chaves = redis_client.keys("livro:*")
     livros_cache = []
     for chave in chaves:
@@ -121,7 +121,7 @@ async def post_livros(livro: Livro, db: Session = Depends(get_db), credentials: 
     db.commit()
     db.refresh(novo_livro)
 
-    salvar_livro_no_cache(novo_livro.id, livro)
+    await salvar_livro_redis(novo_livro.id, livro)
 
     return {"message": "O livro foi criado com sucesso!"}
     
@@ -146,6 +146,6 @@ async def delete_livro(id_livro: int, db: Session = Depends(get_db), credentials
     db.delete(db_livro)
     db.commit()
 
-    deletar_livro_do_cache(id_livro)
+    await deletar_livro_redis(id_livro)
 
     return {"message": "O livro foi excluido com sucesso!"}

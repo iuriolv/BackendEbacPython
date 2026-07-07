@@ -1,36 +1,42 @@
 # 📚 Catálogo de Livros API
 
-API REST desenvolvida com **FastAPI**, **SQLAlchemy** e **SQLite** para gerenciamento de um catálogo de livros.
+API REST desenvolvida com **FastAPI**, **SQLAlchemy**, **SQLite** e **Redis** para gerenciamento de um catálogo de livros.
 
 ## 🚀 Funcionalidades
 
-* Listar livros cadastrados com paginação.
-* Adicionar novos livros.
-* Atualizar informações de livros existentes.
-* Excluir livros do catálogo.
+* Cadastro de livros.
+* Listagem de livros com paginação.
+* Atualização de informações dos livros.
+* Exclusão de livros.
 * Autenticação utilizando HTTP Basic Authentication.
 * Persistência de dados com SQLite.
+* Cache utilizando Redis para melhorar o desempenho das consultas.
+* Endpoint para visualizar os dados armazenados no cache.
 
 ---
 
-## 🛠 Tecnologias Utilizadas
+# 🛠 Tecnologias Utilizadas
 
-* Python 3.11+
+* Python 3.14
 * FastAPI
 * SQLAlchemy
 * SQLite
+* Redis
+* python-dotenv
 * Docker
 * Docker Compose
+* Poetry
 
 ---
 
-## 📂 Estrutura do Projeto
+# 📂 Estrutura do Projeto
 
 ```text
 BackendEbacPython/
 │
-├── app.py
-├── requirements.txt
+├── main.py
+├── pyproject.toml
+├── poetry.lock
 ├── Dockerfile
 ├── docker-compose.yml
 ├── .env
@@ -39,27 +45,31 @@ BackendEbacPython/
 
 ---
 
-## ⚙️ Pré-requisitos
+# ⚙️ Pré-requisitos
 
-Antes de iniciar, instale:
+Antes de iniciar o projeto, tenha instalado:
 
+* Python 3.14+
+* Poetry
 * Docker
 * Docker Compose
+* Redis
 * Git
 
 Verifique as instalações:
 
 ```bash
+python --version
+poetry --version
 docker --version
-docker-compose --version
+docker compose version
+redis-server --version
 git --version
 ```
 
 ---
 
-## 📥 Clonando o Repositório
-
-Clone o projeto:
+# 📥 Clonando o Repositório
 
 ```bash
 git clone https://github.com/iuriolv/BackendEbacPython.git
@@ -73,7 +83,29 @@ cd BackendEbacPython
 
 ---
 
-## 🔐 Configuração das Variáveis de Ambiente
+# 📦 Instalando as Dependências
+
+Caso utilize Poetry:
+
+```bash
+poetry install
+```
+
+Ative o ambiente virtual:
+
+```bash
+poetry shell
+```
+
+Ou execute diretamente:
+
+```bash
+poetry run uvicorn main:app --reload
+```
+
+---
+
+# 🔐 Configuração das Variáveis de Ambiente
 
 Crie um arquivo `.env` na raiz do projeto contendo:
 
@@ -83,58 +115,83 @@ MEU_USUARIO=admin
 MINHA_SENHA=123456
 ```
 
-Você pode alterar os valores conforme necessário.
-
 ---
 
-## 🐳 Executando com Docker Compose
+# 🔴 Redis
 
-### Construir e iniciar os contêineres
+A aplicação utiliza o Redis para armazenar em cache:
 
-Execute o comando abaixo para construir as imagens e iniciar a aplicação em segundo plano:
+* A listagem de livros (`GET /livros`)
+* Livros cadastrados individualmente
+* Remoção automática do cache ao excluir livros
 
-```bash
-docker-compose up --build -d
+Por padrão, o projeto conecta em:
+
+```text
+localhost:6379
 ```
 
-O parâmetro:
+Caso esteja utilizando Docker:
 
-* `--build` força a reconstrução da imagem.
-* `-d` executa os contêineres em background.
+```bash
+docker run -d --name redis -p 6379:6379 redis
+```
+
+Ou execute o servidor Redis localmente:
+
+```bash
+redis-server
+```
 
 ---
 
-### Verificar os contêineres em execução
+# 🐳 Executando com Docker Compose
+
+Construa e inicie os contêineres:
+
+```bash
+docker compose up --build -d
+```
+
+Verifique se estão em execução:
 
 ```bash
 docker ps
 ```
 
----
-
-### Visualizar logs da aplicação
+Visualize os logs:
 
 ```bash
-docker-compose logs -f
+docker compose logs -f
 ```
 
 ---
 
-## 🌐 Acessando a Aplicação
+# ▶️ Executando Localmente
 
-Após iniciar os contêineres, a API estará disponível em:
+Com o ambiente virtual ativo:
+
+```bash
+uvicorn main:app --reload
+```
+
+A API ficará disponível em:
 
 ```text
 http://localhost:8000
 ```
 
-### Documentação Swagger
+---
+
+# 📖 Documentação
+
+Swagger:
 
 ```text
 http://localhost:8000/docs
 ```
 
-### Documentação ReDoc
+ReDoc:
 
 ```text
 http://localhost:8000/redoc
@@ -142,11 +199,11 @@ http://localhost:8000/redoc
 
 ---
 
-## 🔑 Autenticação
+# 🔑 Autenticação
 
 Todos os endpoints utilizam **HTTP Basic Authentication**.
 
-Exemplo usando cURL:
+Exemplo utilizando cURL:
 
 ```bash
 curl -u admin:123456 http://localhost:8000/livros
@@ -154,15 +211,21 @@ curl -u admin:123456 http://localhost:8000/livros
 
 ---
 
-## 📚 Endpoints Disponíveis
+# 📚 Endpoints
 
-### Listar livros
+## Listar livros
 
 ```http
 GET /livros?page=1&limit=10
 ```
 
-### Adicionar livro
+Retorna a lista paginada de livros.
+
+As respostas ficam armazenadas em cache por **30 segundos**.
+
+---
+
+## Adicionar livro
 
 ```http
 POST /adicionar
@@ -178,39 +241,80 @@ Exemplo de payload:
 }
 ```
 
-### Atualizar livro
+Após o cadastro, o livro também é armazenado no Redis.
+
+---
+
+## Atualizar livro
 
 ```http
 PUT /atualizar/{id_livro}
 ```
 
-### Excluir livro
+Atualiza as informações de um livro existente.
+
+---
+
+## Excluir livro
 
 ```http
 DELETE /deletar/{id_livro}
 ```
 
----
-
-## 🛑 Parando a Aplicação
-
-Para interromper e remover os contêineres:
-
-```bash
-docker-compose down
-```
-
-Para remover também os volumes associados:
-
-```bash
-docker-compose down -v
-```
+Remove o livro do banco de dados e também do cache do Redis.
 
 ---
 
-## 👨‍💻 Autor
+## Visualizar Cache
+
+```http
+GET /debug/redis
+```
+
+Endpoint utilizado para visualizar todas as chaves armazenadas no Redis, incluindo:
+
+* chave
+* conteúdo
+* tempo restante de expiração (TTL)
+
+---
+
+# ⚡ Estratégia de Cache
+
+A API utiliza o Redis para reduzir consultas repetidas ao banco de dados.
+
+Fluxo da listagem de livros:
+
+1. O cliente solicita `GET /livros`.
+2. A API verifica se a resposta já existe no Redis.
+3. Caso exista, retorna os dados diretamente do cache.
+4. Caso contrário, consulta o banco SQLite.
+5. O resultado é armazenado no Redis por 30 segundos antes de ser enviado ao cliente.
+
+Essa estratégia reduz o número de consultas ao banco e melhora o desempenho da aplicação.
+
+---
+
+# 🛑 Encerrando a Aplicação
+
+Parar os contêineres:
+
+```bash
+docker compose down
+```
+
+Remover também os volumes:
+
+```bash
+docker compose down -v
+```
+
+---
+
+# 👨‍💻 Autor
 
 **Iuri Oliveira**
 
-* GitHub: https://github.com/iuriolv
-* E-mail: [euree.olv@gmail.com](mailto:euree.olv@gmail.com)
+GitHub: https://github.com/iuriolv
+
+E-mail: [euree.olv@gmail.com](mailto:euree.olv@gmail.com)
