@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -10,6 +10,9 @@ from sqlalchemy.orm import sessionmaker, Session
 import asyncio
 import redis
 import json
+from celery_app import celery_app
+from celery.result import AsyncResult
+from kafka_producer import enviar_evento
 
 load_dotenv()
 
@@ -19,7 +22,9 @@ engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-redis_client = redis.Redis(host='redis', port=6379, db=0, decode_responses=True)
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = os.getenv("REDIS_PORT", 6379)
+redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0, decode_responses=True)
 
 app = FastAPI(
     title="Catálago de Livros",
@@ -121,7 +126,12 @@ async def post_livros(livro: Livro, db: Session = Depends(get_db), credentials: 
     db.commit()
     db.refresh(novo_livro)
 
-    await salvar_livro_redis(novo_livro.id, livro)
+    salvar_livro_redis(novo_livro.id, livro)
+
+    enviar_evento("livros_eventos", {
+        "acao": "livro_criado",
+        "livro": livro.dict(),
+    })
 
     return {"message": "O livro foi criado com sucesso!"}
     
