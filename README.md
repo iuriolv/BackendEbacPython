@@ -1,45 +1,85 @@
 # 📚 Catálogo de Livros API
 
-API REST desenvolvida com **FastAPI**, **SQLAlchemy**, **SQLite** e **Redis** para gerenciamento de um catálogo de livros.
+![Python](https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.136-009688?logo=fastapi&logoColor=white)
+![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-ORM-D71F00)
+![Redis](https://img.shields.io/badge/Redis-Cache-DC382D?logo=redis&logoColor=white)
+![Apache Kafka](https://img.shields.io/badge/Apache-Kafka-231F20?logo=apachekafka&logoColor=white)
+![Celery](https://img.shields.io/badge/Celery-Task%20Queue-37814A?logo=celery&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?logo=docker&logoColor=white)
+![Poetry](https://img.shields.io/badge/Poetry-Dependency%20Manager-60A5FA?logo=poetry&logoColor=white)
 
-## 🚀 Funcionalidades
-
-* Cadastro de livros.
-* Listagem de livros com paginação.
-* Atualização de informações dos livros.
-* Exclusão de livros.
-* Autenticação utilizando HTTP Basic Authentication.
-* Persistência de dados com SQLite.
-* Cache utilizando Redis para melhorar o desempenho das consultas.
-* Endpoint para visualizar os dados armazenados no cache.
+API REST desenvolvida com **FastAPI** para gerenciamento de um catálogo de livros. O projeto integra banco de dados relacional, cache em Redis, mensageria com Apache Kafka e infraestrutura para processamento assíncrono utilizando Celery, além de disponibilizar todo o ambiente por meio do Docker Compose.
 
 ---
 
-# 🛠 Tecnologias Utilizadas
+# ✨ Funcionalidades
 
-* Python 3.14
-* FastAPI
-* SQLAlchemy
-* SQLite
-* Redis
-* python-dotenv
-* Docker
-* Docker Compose
-* Poetry
+- Cadastro de livros
+- Listagem paginada de livros
+- Atualização de livros
+- Exclusão de livros
+- Autenticação HTTP Basic
+- Persistência utilizando SQLAlchemy
+- Cache de consultas com Redis
+- Publicação de eventos no Apache Kafka
+- Ambiente containerizado com Docker Compose
+- Documentação automática da API com Swagger e ReDoc
 
 ---
 
-# 📂 Estrutura do Projeto
+# 🛠️ Tecnologias Utilizadas
+
+| Tecnologia | Finalidade |
+|------------|------------|
+| Python 3.12+ | Linguagem principal |
+| FastAPI | Framework da API |
+| SQLAlchemy | ORM |
+| SQLite | Banco de dados |
+| Redis | Cache |
+| Apache Kafka | Publicação de eventos |
+| Celery | Processamento assíncrono |
+| Poetry | Gerenciamento de dependências |
+| Docker | Containerização |
+| Docker Compose | Orquestração dos serviços |
+
+---
+
+# 🏗️ Arquitetura
+
+```text
+                 Cliente
+                    │
+                    ▼
+              FastAPI (API)
+                    │
+      ┌─────────────┼──────────────┐
+      │             │              │
+      ▼             ▼              ▼
+ SQLite        Redis Cache     Apache Kafka
+      │
+      ▼
+ SQLAlchemy ORM
+
+Redis também é utilizado como Broker/Backend do Celery.
+```
+
+---
+
+# 📁 Estrutura do Projeto
 
 ```text
 BackendEbacPython/
 │
 ├── main.py
-├── pyproject.toml
-├── poetry.lock
+├── celery_app.py
+├── kafka_producer.py
+├── tasks.py
 ├── Dockerfile
 ├── docker-compose.yml
-├── .env
+├── pyproject.toml
+├── poetry.lock
+├── .env.example
 └── README.md
 ```
 
@@ -47,45 +87,28 @@ BackendEbacPython/
 
 # ⚙️ Pré-requisitos
 
-Antes de iniciar o projeto, tenha instalado:
+Para executar o projeto localmente é necessário possuir:
 
-* Python 3.14+
-* Poetry
-* Docker
-* Docker Compose
-* Redis
-* Git
-
-Verifique as instalações:
-
-```bash
-python --version
-poetry --version
-docker --version
-docker compose version
-redis-server --version
-git --version
-```
+- Python 3.12 ou superior
+- Poetry
+- Docker
+- Docker Compose
 
 ---
 
-# 📥 Clonando o Repositório
+# 📥 Clonando o projeto
 
 ```bash
 git clone https://github.com/iuriolv/BackendEbacPython.git
-```
 
-Entre na pasta do projeto:
-
-```bash
 cd BackendEbacPython
 ```
 
 ---
 
-# 📦 Instalando as Dependências
+# 📦 Instalando as dependências
 
-Caso utilize Poetry:
+Utilizando Poetry:
 
 ```bash
 poetry install
@@ -97,116 +120,95 @@ Ative o ambiente virtual:
 poetry shell
 ```
 
-Ou execute diretamente:
+---
+
+# 🔐 Configuração
+
+Crie um arquivo `.env`.
+
+Exemplo:
+
+```env
+DATABASE_URL=sqlite:///./biblioteca.db
+
+MEU_USUARIO=admin
+MINHA_SENHA=admin
+
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_URL=redis://redis:6379/0
+
+KAFKA_SERVER=kafka:9092
+```
+
+---
+
+# 🐳 Executando com Docker
+
+Suba todos os serviços:
+
+```bash
+docker compose up --build
+```
+
+Serão iniciados os seguintes containers:
+
+| Serviço | Porta |
+|----------|-------|
+| FastAPI | 8000 |
+| Redis | 6379 |
+| Kafka | 9092 |
+| Kafka UI | 8080 |
+| Celery Worker | Interna |
+
+Para executar em segundo plano:
+
+```bash
+docker compose up -d --build
+```
+
+---
+
+# ▶️ Executando localmente
+
+Caso deseje executar sem Docker:
 
 ```bash
 poetry run uvicorn main:app --reload
 ```
 
----
-
-# 🔐 Configuração das Variáveis de Ambiente
-
-Crie um arquivo `.env` na raiz do projeto contendo:
-
-```env
-DATABASE_URL=sqlite:///./biblioteca.db
-MEU_USUARIO=admin
-MINHA_SENHA=123456
-```
-
----
-
-# 🔴 Redis
-
-A aplicação utiliza o Redis para armazenar em cache:
-
-* A listagem de livros (`GET /livros`)
-* Livros cadastrados individualmente
-* Remoção automática do cache ao excluir livros
-
-Por padrão, o projeto conecta em:
-
-```text
-localhost:6379
-```
-
-Caso esteja utilizando Docker:
-
-```bash
-docker run -d --name redis -p 6379:6379 redis
-```
-
-Ou execute o servidor Redis localmente:
-
-```bash
-redis-server
-```
-
----
-
-# 🐳 Executando com Docker Compose
-
-Construa e inicie os contêineres:
-
-```bash
-docker compose up --build -d
-```
-
-Verifique se estão em execução:
-
-```bash
-docker ps
-```
-
-Visualize os logs:
-
-```bash
-docker compose logs -f
-```
-
----
-
-# ▶️ Executando Localmente
-
-Com o ambiente virtual ativo:
-
-```bash
-uvicorn main:app --reload
-```
-
 A API ficará disponível em:
 
-```text
+```
 http://localhost:8000
 ```
 
 ---
 
-# 📖 Documentação
+# 📖 Documentação da API
 
-Swagger:
+Swagger UI
 
-```text
+```
 http://localhost:8000/docs
 ```
 
-ReDoc:
+ReDoc
 
-```text
+```
 http://localhost:8000/redoc
 ```
 
 ---
 
-# 🔑 Autenticação
+# 🔐 Autenticação
 
-Todos os endpoints utilizam **HTTP Basic Authentication**.
+Os endpoints da API utilizam **HTTP Basic Authentication**.
 
 Exemplo utilizando cURL:
 
 ```bash
-curl -u admin:123456 http://localhost:8000/livros
+curl -u admin:admin http://localhost:8000/livros
 ```
 
 ---
@@ -219,9 +221,7 @@ curl -u admin:123456 http://localhost:8000/livros
 GET /livros?page=1&limit=10
 ```
 
-Retorna a lista paginada de livros.
-
-As respostas ficam armazenadas em cache por **30 segundos**.
+Retorna uma lista paginada de livros cadastrados.
 
 ---
 
@@ -235,13 +235,16 @@ Exemplo de payload:
 
 ```json
 {
-  "nome_livro": "Dom Casmurro",
-  "autor": "Machado de Assis",
-  "ano": 1899
+    "nome_livro": "Clean Code",
+    "autor": "Robert C. Martin",
+    "ano": 2008
 }
 ```
 
-Após o cadastro, o livro também é armazenado no Redis.
+Ao cadastrar um livro:
+
+- os dados são persistidos no banco;
+- um evento é publicado em um tópico Kafka.
 
 ---
 
@@ -261,7 +264,7 @@ Atualiza as informações de um livro existente.
 DELETE /deletar/{id_livro}
 ```
 
-Remove o livro do banco de dados e também do cache do Redis.
+Remove um livro do banco de dados e também do cache do Redis.
 
 ---
 
@@ -271,43 +274,92 @@ Remove o livro do banco de dados e também do cache do Redis.
 GET /debug/redis
 ```
 
-Endpoint utilizado para visualizar todas as chaves armazenadas no Redis, incluindo:
-
-* chave
-* conteúdo
-* tempo restante de expiração (TTL)
+Lista todas as chaves atualmente armazenadas no Redis.
 
 ---
 
-# ⚡ Estratégia de Cache
+# ⚡ Cache com Redis
 
-A API utiliza o Redis para reduzir consultas repetidas ao banco de dados.
+A listagem de livros utiliza Redis para reduzir consultas repetidas ao banco de dados.
 
-Fluxo da listagem de livros:
+O cache é criado por página utilizando uma chave semelhante a:
 
-1. O cliente solicita `GET /livros`.
-2. A API verifica se a resposta já existe no Redis.
-3. Caso exista, retorna os dados diretamente do cache.
-4. Caso contrário, consulta o banco SQLite.
-5. O resultado é armazenado no Redis por 30 segundos antes de ser enviado ao cliente.
+```
+livros:page:1:limit:10
+```
 
-Essa estratégia reduz o número de consultas ao banco e melhora o desempenho da aplicação.
+As respostas permanecem armazenadas por **30 segundos** antes de expirarem automaticamente.
+
+Também são armazenadas informações individuais dos livros utilizando chaves no formato:
+
+```
+livro:{id}
+```
 
 ---
 
-# 🛑 Encerrando a Aplicação
+# 📨 Publicação de Eventos com Kafka
 
-Parar os contêineres:
+Sempre que um novo livro é cadastrado, a aplicação publica um evento no tópico:
 
-```bash
-docker compose down
+```
+livros_eventos
 ```
 
-Remover também os volumes:
+Exemplo da mensagem enviada:
 
-```bash
-docker compose down -v
+```json
+{
+    "acao": "livro_criado",
+    "livro": {
+        "nome_livro": "Clean Code",
+        "autor": "Robert C. Martin",
+        "ano": 2008
+    }
+}
 ```
+
+---
+
+# ⚙️ Celery
+
+O projeto possui configuração para utilização do Celery utilizando o Redis como broker e backend.
+
+Atualmente o worker encontra-se configurado para futuras tarefas assíncronas e pode ser iniciado automaticamente pelo Docker Compose.
+
+---
+
+# 🗄️ Banco de Dados
+
+A aplicação utiliza SQLAlchemy para mapear a tabela:
+
+```
+biblioteca
+```
+
+Campos disponíveis:
+
+| Campo | Tipo |
+|--------|------|
+| id | Integer |
+| nome_livro | String |
+| autor | String |
+| ano | Integer |
+
+---
+
+# 📌 Próximos Passos
+
+Algumas melhorias planejadas para futuras versões:
+
+- Testes automatizados
+- JWT Authentication
+- CI/CD
+- Logs estruturados
+- Deploy em produção
+- Docker Healthcheck
+- Monitoramento
+- Cobertura de testes
 
 ---
 
@@ -317,4 +369,4 @@ docker compose down -v
 
 GitHub: https://github.com/iuriolv
 
-E-mail: [euree.olv@gmail.com](mailto:euree.olv@gmail.com)
+E-mail: euree.olv@gmail.com
