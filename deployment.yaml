@@ -13,7 +13,8 @@ spec:
         app: fastapi
     spec:
       containers:
-        - name: Biblioteca
+        - name: biblioteca
           image: iurid/backend-ebac-python:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000

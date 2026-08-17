@@ -10,3 +10,7 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 8000
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 8000
