@@ -35,6 +35,6 @@ jobs:
       
       - name: Executar container
         run: |
-          docker run -d --name fastapi-container -p 8000:8000 fastapi-app:latest
+          docker run -d --name fastapi-container -p 8000:8000 my-fastapi-app:latest
           sleep 5
           docker ps
