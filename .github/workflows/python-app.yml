@@ -31,7 +31,7 @@ jobs:
         run: echo "Nenhum teste configurado ainda."
 
       - name: Build da imagem Docker
-        run: docker build -t my-fastapi-app .
+        run: docker build -t my-fastapi-app:latest .
       
       - name: Executar container
         run: |
