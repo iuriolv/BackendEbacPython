@@ -13,6 +13,9 @@ import json
 from celery_app import celery_app
 from celery.result import AsyncResult
 from kafka_producer import enviar_evento
+import logging
+import yaml
+from elasticsearch import Elasticsearch
 
 load_dotenv()
 
@@ -25,6 +28,14 @@ Base = declarative_base()
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 REDIS_PORT = os.getenv("REDIS_PORT", 6379)
 redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0, decode_responses=True)
+
+es = Elasticsearch(hosts=["http://elasticsearch:9200"])
+with open("logging.yaml", "r") as f:
+    config = yaml.safe_load()
+    logging.config.dictConfig(config)
+
+logger = logging.getLogger(name)
+logger.info("Aplicação iniciada com sucesso!")
 
 app = FastAPI(
     title="Catálago de Livros",
@@ -88,6 +99,11 @@ async def ver_livros_radis():
         ttl = redis_client.ttl(chave)
         livros_cache.append({"chave": chave, "valor": json.loads(valor), "ttl": ttl})
     return livros_cache
+
+@app.get("/")
+def hello_world():
+    logger.info("Acessando a rota raiz da API")
+    return {"message": "Bem-vindo à API de Catálogo de Livros!"}
 
 @app.get("/livros")
 async def get_livros(page: int = 1, limit: int = 10, db: Session = Depends(get_db), credentials: HTTPBasicCredentials = Depends(autenticar_usuario)):
