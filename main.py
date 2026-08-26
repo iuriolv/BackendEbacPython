@@ -34,7 +34,7 @@ with open("logging.yaml", "r") as f:
     config = yaml.safe_load()
     logging.config.dictConfig(config)
 
-logger = logging.getLogger(name)
+logger = logging.getLogger(__name__)
 logger.info("Aplicação iniciada com sucesso!")
 
 app = FastAPI(
